@@ -21,7 +21,33 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+
+    const tmpCollection = client.db('tmp').collection('tmps');
+
+    // Create a new tmp
+    app.post("/task", async (req, res) => {
+      const c_task = req.body;
+      c_task.creator = req.query.email; // Set the creator field based on the authenticated user
+      const result =  tmpCollection.insertOne(c_task);
+      console.log(result);
+      res.send(result);
+    });
+
+    app.get("/task", async (req, res) => {
+      const result = await tmpCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Get a single task by ID
+    app.get("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await tmpCollection.findOne(query);
+      res.send(result);
+    });
 
 
 
@@ -31,10 +57,10 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
