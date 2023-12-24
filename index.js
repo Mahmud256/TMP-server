@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require('dotenv').config();
 const cors = require("cors");
 const app = express();
@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-  const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5cknjnc.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5cknjnc.mongodb.net/?retryWrites=true&w=majority`;
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -33,7 +33,7 @@ async function run() {
     app.post("/task", async (req, res) => {
       const c_task = req.body;
       c_task.creator = req.query.email; // Set the creator field based on the authenticated user
-      const result =  tmpCollection.insertOne(c_task);
+      const result = tmpCollection.insertOne(c_task);
       console.log(result);
       res.send(result);
     });
@@ -52,6 +52,40 @@ async function run() {
       const result = await tmpCollection.findOne(query);
       res.send(result);
     });
+
+    // Update a task or task by ID
+    app.put("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedTask = req.body;
+      console.log("id", id, updatedTask);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const task = {
+        $set: {
+          title: updatedTask.title,
+          dueDate: updatedTask.dueDate,
+          taskLevel: updatedTask.taskLevel,
+          description: updatedTask.description,
+          taskImage: updatedTask.taskImage
+          
+          // Add other properties specific to tasks
+        },
+      };
+      const result = await tmpCollection.updateOne(filter, task, options);
+      res.send(result);
+    });
+
+    // Delete a task or task by ID
+    app.delete("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("delete", id);
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await tmpCollection.deleteOne(query);
+      res.send(result);
+    });
+
 
 
 
